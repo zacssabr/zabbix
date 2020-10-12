@@ -1,0 +1,72 @@
+Monitoring UPS Devices: UPS-MIB
+
+In the article "Monitoring UPS Devices" I tried to explain how important is monitoring these key devices and what are the methods when doing it. In this article, much more practical than the previous one, I'll cover where UPS-MIB stores key info from a monitoring point of view. For those of us even more practical I'll name some free Nagios core compatible plugins that do the trick quite well.
+
+UPS-MIB
+UPS-MIB (RFC1628) is the most extended MIB in UPS devices with native or added (via network cards) SNMP support. It covers, among others:
+
+Electrical levels (voltage, current, power, frequency) in both inputs and outputs
+Battery system status (temperatures, charge and autonomy levels)
+Device working mode: online, offline, bypassed...
+Device alarms
+... what is basically all you need to know about your UPS for getting an accurate view of its state.
+
+You can check if your device supports UPS MIB trying to query any OID of the MIB subtree 1.3.6.1.2.1.33. For instance, and supposing you have the net-snmp package, you can get the device model identifier from a UPS addressed as 192.168.1.129 supporting SNMP version 1 with community string "public" using this command:
+
+snmpget -v 1 -c public 192.168.1.129 .1.3.6.1.2.1.33.1.1.2.0
+
+Finally, you can get the full MIB from the IETF site: http://tools.ietf.org/html/rfc1628
+
+Electrical levels
+Monitoring electrical levels is useful for:
+Being sure that input levels are in the right operational margins and, when not, having true data for complaining to your power provider.
+Knowing when your device is reaching its limits (based on output power) and thus being able of planning upgrades.
+Having a true monthly estimate about how much power (and hence money) is spent in your datacenter.
+All those values are available in the MIB groups upsInput (.1.3.6.1.2.1.33.1.3) and upsOutput (.1.3.6.1.2.1.33.1.4). Following the previous example, you can get the upsInput group OIDs running this command:
+
+snmpwalk -v 1 -c public 192.168.1.129 .1.3.6.1.2.1.33.1.3
+
+Every group contains, among others, a table where line levels (voltage, current, power, frequency for inputs, load for outpus) are stored. Have in mind that, since UPS devices can have more than one input/output line (for instance, three-phase UPS have three input and three output lines) you can find different line info in that table. So for instance, for getting levels in the input line 2 you must run this command:
+
+snmpwalk -v 1 -c public 192.168.1.129 .1.3.6.1.2.1.33.1.3.3.1.2
+
+Some interesting OIDs for input table are:
+upsInputVoltage (upsInput.3.1.3)
+upsInputCurrent (upsInput.3.1.4)
+upsInputTruePower (upsInput.3.1.5)
+Some interesting OIDs for output table are:
+upsOutputVoltage (upsOutput.4.1.2)
+upsOutputCurrent (upsOutput.4.1.3)
+upsOutputPower (upsOutput.4.1.4)
+upsOutputPercentLoad (upsOutput.4.1.5)
+Maybe the key value to check is the last one (upsOutputPercentLoad) since it will show the load, in percent over its nominal power, that your UPS is supporting in a given time. If this value reaches levels near 100% its time to start considering to upgrade your UPS. 
+
+In three-phase devices, this value is important for other purpose too: checking how balanced are your output lines. If you find that some lines are highly loaded while other(s) not, its a good idea talking with your electrical technician in order to distribute the load in a more balanced way: Any UPS likes having unbalanced lines.
+
+Specifically for the upsOutput group, the OID upsOutputSource (1.3.6.1.2.1.33.1.4.1.0) stores the source from where the UPS gets its power:
+If the UPS is online, upsOutputSource is 3 (normal)
+If the device is in bypass mode, upsOutputSource is 4 (bypass)
+If the device is offline, upsOutputSource is 5 (battery)
+
+Battery system
+Battery system is the vital point in a UPS device. You can be sure that an UPS is healthy only to see how it is unable to support a moderate load during a power cutoff when its battery system is not ok.
+
+upsBattery group (1.3.6.1.2.1.33.1.2) stores all the battery system information available, being the most important:
+upsBatteryStatus (upsBattery.1.0) stores the status of the battery: unknown (1), normal (2), low (3) or depleted (4).
+upsEstimatedMinutesRemaining (upsBattery.3.0) shows an estimation about how long, in minutes, are lasting your batteries. This value is established based on battery system capacity and output load: the more load, the less autonomy.
+upsEstimatedChargeRemaining (upsBattery.4.0) shows the load level of your battery system. In a online system this value must be 100%.
+upsBatteryTemperature (upsBattery.7.0) shows the temperature in your battery system. Temperature is key for optimizing the life of your battery system, or what is the same, for helping you to save money delaying each battery replacement cycle. Ask your UPS manufacturer for his optimal battery temperature levels, but usually it might be in the 20-25 Celsius degrees range.
+
+Device status
+You can get a view of the status of your device in two ways:
+Combining upsBatteryStatus, upsEstimatedMinutesRemaining, upsEstimatedChargeRemaining, upsOutputPercentLoad and upsOutputSource  for knowing:
+If your UPS device is online, offline or bypassed
+If in offline mode, knowing your battery level and getting an estimation of the battery remaining time
+Cheking the device alarm info. The upsAlarm group (1.3.6.1.2.1.33.1.6) stores the alarm information of the device: upsAlarmsPresent OID (upsAlarm.1.0) stores the number of active alarms present and upsAlarmTable table (upsAlarm.2) stores the information (id, description and time) of each present alarm.
+
+Nagios core compatible plugins
+For those managing Nagios Core based monitoring solutions (Nagios, Icinga, Centreon, ...), there are some free plugins that could help you. All these plugins are addressed to monitor UPS-MIB compatible devices and use most of the previous reviewed OIDs:
+
+check_ups_alarms is shared in the post Plugin Of The Month: Checking UPS alarms of this website.
+check_ups_mode, from Boreal Labs, combines different UPS-MIB values for generating a UPS mode status (online, bypass, offline, offline with battery low or offline with battery depleted) and returns battery load percent and backup time as performance data.
+
