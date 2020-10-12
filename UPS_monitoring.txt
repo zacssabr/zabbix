@@ -1,5 +1,45 @@
 Monitoring UPS Devices: UPS-MIB
 
+From a layered design point of view, the monitoring base layer -or layer 0- includes all devices whose mission is creating a solid physic and environmental platform where upper devices and services could run.
+
+UPS devices are a key part of this layer: from affording not only a continuous supply but also a quality signal to showing the consumption per line, they are a MUST BE when designing from datacenter to global monitoring strategies.
+
+DISCLAIMER: This is mainly a theoretical article. If you're looking for practical info about how to get the most of your device read "Monitoring UPS Devices: UPS-MIB"
+
+Why monitoring a UPS?
+Many times, when getting data to start a monitoring project, I find that users claim "Really? Can it be monitored?", then I answer "it MUST be monitored".
+
+Perhaps because UPS devices are in the border between computer and power supply worlds, in the limits where a vast, misterious land populated by volts, ampers and watts starts, the IT crowd deliberately or unconsciously doesn't pay them a bit of its attention.
+
+However, all the IT hard -and thus soft- structure depends on them as suppliers of continuous, clean* power supply, just consider the costs in manpower and the amount of offline service clients of an unattended power cutoff in your CPD due to a unmonitorized out of service UPS.
+
+All UPS are based on batteries as power storage devices and battery life is closely environmental temperature dependent, usually 21 to 25 Celsius degrees (depending on battery specs). In order to maximize their life you have two options: turning you CPD into a freezer spending lots of money in conditioning air maintenance, or monitoring their temperature and fit the environmental temperature to its optimal value... bet it, the last one wins.
+
+Finally, monitoring the UPS output line values will allow you, without the need of using PDUs, knowing when you are reaching the UPS nominal limits or helping you to dimension the right device (and thus saving money) if you need to upgrade the current. And last but not least nowadays, monitoring the UPS input line value will allow you getting the overall** power supply consumption, and thus, the CO2 emission levels of your CPD.
+
+...Well, and how do I get that info?
+For a usual IT technician, first obvious option should be adopting a TUIN approach (Toothpicks Under Its Nails). Saddly UPS don't have nails.
+
+Now seriously, you can rely on a propietary monitoring solution like those that some times manufacturers give or much more times they sell. If you have good friends and/or money to get it you will get a nice, colorful, program that only will be useful to monitor one kind of UPS. So if you have a diversified UPS park you will have to use more than one, and you will have to change it if you change the brand when upgrading it.
+
+On the other hand, you can increase the value of your monitoring platform (read Nagios, Zenoss, OpenNMS or any other that supports SNMP traps and/or requests) adding UPS monitoring capabilities. You only need a UPS with SNMP capabilites: many of them have it out of the box, other can get it by mounting a network interface adapter.
+
+When dealing with UPS SNMP MIBs you have, again, two options: basing your monitoring on private, manufacturer MIBs, or adopting an standard position and getting the needed info from the RFC 1628 MIB (formely UPS-MIB). First one is sweet and easy because the manufacturer might had chewed the meal to you, however you'll have to create a service set by manufacturer. Second one will require, in some cases, a higher scripting effort but it will work with all UPS supporting RFC 1628 MIB (that should be -if not all- the most).
+
+As most of you -like me- like the extreme pain, let's go for the second one: "Monitoring UPS devices: UPS-MIB"
+
+Summarizing
+Using a few words I've tried to show the pros of monitoring our UPS park: more security, costs saving and more info in our hands to base further decisions. From the many ways that could be selected to monitor an UPS, I've argued why selecting a SNMP based approach and why using the info stored in RFC 1628 MIB.
+
+Interesting links
+The different types of UPS systems (Neil Rasmussen, APC) 
+
+Related posts
+Monitoring UPS devices: UPS-MIB
+
+(*).- Depending on the device characteristics, not all UPS improve the power signal quality. To know more about it check the fantastic Neil Rasmussen's white paper in references.
+(**).- Not counting air conditioning consumptions and stating that all CPD devices are attached to UPS network.
+
 In the article "Monitoring UPS Devices" I tried to explain how important is monitoring these key devices and what are the methods when doing it. In this article, much more practical than the previous one, I'll cover where UPS-MIB stores key info from a monitoring point of view. For those of us even more practical I'll name some free Nagios core compatible plugins that do the trick quite well.
 
 UPS-MIB
