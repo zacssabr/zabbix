@@ -1,0 +1,17 @@
+Once I added a graph that draws the amount of payments from the MySQL billing database from another server.
+I had to add through external checks.
+First of all, a script was created and put into the standard script directory or another, specifying it with the “ExternalScripts=/var/scripts” parameter in the /etc/zabbix_server.conf configuration file. Then you need to restart the Zabbix server with the command:
+--
+sudo service zabbix-server restart
+--
+Content of the written script:
+--
+mysql -u USER -pPASSWORD -h 192.168.0.1 -e 'SELECT SUM(money) FROM database.table WHERE date= CURDATE() - INTERVAL 1 DAY;' -s -N
+--
+In the example, the script connects to the database and sums up all payments for the previous day, the -s and -N parameters delete unnecessary data in the response, so we get only a floating-point digit.
+The script file also needs to be made executable, for example with the command:
+--
+chmod a+x /var/scripts/money.sh
+--
+In the Zabbix control panel, you need to add a data item with external verification by specifying the money.sh key, the data type is a floating-point number and the execution time, for example, once every half a day (this is 43200 sec), then create a graph by adding the created data element to it.
+I recommend using Zabbix agent on a remote server instead of a local script with external verification.
